@@ -4,28 +4,43 @@ class Bullet {
         this.isFriendly = false;
         this.size = 6;
         this.speed = 7;
+        this.type = 'bullet'; // bullet or spear
     }
-    init(x, y, angle, isFriendly = false) {
+    init(x, y, angle, isFriendly = false, type = 'bullet') {
         this.x = x;
         this.y = y;
         this.angle = angle;
         this.isFriendly = isFriendly;
+        this.type = type;
         this.active = true;
+        this.size = type === 'spear' ? 8 : 6;
+        this.speed = type === 'spear' ? 5 : 7;
     }
     update() {
         this.x += Math.cos(this.angle) * this.speed;
         this.y += Math.sin(this.angle) * this.speed;
-        if (this.x < -50 || this.x > window.innerWidth + 50 || this.y < -50 || this.y > window.innerHeight + 50) {
+        if (this.x < -100 || this.x > window.innerWidth + 100 || this.y < -100 || this.y > window.innerHeight + 100) {
             this.active = false;
         }
     }
     draw(ctx) {
         ctx.save();
-        ctx.fillStyle = this.isFriendly ? '#00f2ff' : '#ff00ea';
-        ctx.shadowBlur = 10;
+        ctx.fillStyle = this.isFriendly ? '#00f2ff' : (this.type === 'spear' ? '#44ffff' : '#ff00ea');
+        ctx.shadowBlur = this.type === 'spear' ? 20 : 10;
         ctx.shadowColor = ctx.fillStyle;
+
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        if (this.type === 'spear') {
+            // Desenha uma lança (triângulo esticado)
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle);
+            ctx.moveTo(15, 0);
+            ctx.lineTo(-10, -5);
+            ctx.lineTo(-10, 5);
+            ctx.closePath();
+        } else {
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        }
         ctx.fill();
         ctx.restore();
     }
@@ -99,10 +114,28 @@ class Enemy {
     }
     setup() {
         switch (this.type) {
-            case 'Swordsman': this.speed = 2.2; this.points = 1; this.color = '#ff4444'; break;
-            case 'Archer': this.speed = 1.3; this.points = 2; this.color = '#cc44ff'; break;
-            case 'Mage': this.speed = 0.6; this.points = 3; this.color = '#44ffff'; break;
-            case 'Grenadier': this.speed = 3.5; this.points = 2; this.color = '#ffaa44'; break;
+            case 'Swordsman':
+                this.speed = 2.2;
+                this.points = 1;
+                this.color = '#ff4444';
+                this.swordRot = 0;
+                break;
+            case 'Archer':
+                this.speed = 1.3;
+                this.points = 2;
+                this.color = '#cc44ff';
+                break;
+            case 'Mage':
+                this.speed = 3.5; // Começa rápido para entrar na tela
+                this.points = 3;
+                this.color = '#44ffff';
+                this.isStatic = false;
+                break;
+            case 'Grenadier':
+                this.speed = 3.5;
+                this.points = 2;
+                this.color = '#ffaa44';
+                break;
         }
     }
     update(player, pool) {
@@ -115,6 +148,7 @@ class Enemy {
             case 'Swordsman':
                 this.x += (dx / dist) * this.speed;
                 this.y += (dy / dist) * this.speed;
+                this.swordRot += 0.05;
                 break;
             case 'Archer':
                 if (dist > 320) {
@@ -129,10 +163,17 @@ class Enemy {
                 }
                 break;
             case 'Mage':
-                this.x += (dx / dist) * this.speed;
-                this.y += (dy / dist) * this.speed;
-                if (Math.round(this.timer * 60) % 720 === 0) { // 12s
-                    pool.magicCircle.get(player.x, player.y);
+                // Para se entrar na zona segura (margem de 120px)
+                if (!this.isStatic) {
+                    this.x += (dx / dist) * this.speed;
+                    this.y += (dy / dist) * this.speed;
+                    if (this.x > 120 && this.x < window.innerWidth - 120 && this.y > 120 && this.y < window.innerHeight - 120) {
+                        this.isStatic = true;
+                    }
+                }
+                // Ataque de Lança a cada 4s (240 frames aprox)
+                if (Math.round(this.timer * 60) % 240 === 0) {
+                    pool.bullet.get(this.x, this.y, Math.atan2(dy, dx), false, 'spear');
                 }
                 break;
             case 'Grenadier':
@@ -158,8 +199,16 @@ class Enemy {
         ctx.shadowColor = this.color;
 
         ctx.beginPath();
-        if (this.type === 'Swordsman') ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        else if (this.type === 'Archer') {
+        if (this.type === 'Swordsman') {
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Espada pequena rodando ao redor
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.swordRot);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(this.radius + 5, -2, 15, 4);
+        } else if (this.type === 'Archer') {
             ctx.moveTo(this.x, this.y - this.radius);
             ctx.lineTo(this.x + this.radius, this.y + this.radius);
             ctx.lineTo(this.x - this.radius, this.y + this.radius);

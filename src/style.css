@@ -38,6 +38,29 @@ body {
     cursor: none;
 }
 
+#custom-cursor {
+    position: fixed;
+    width: 30px;
+    height: 30px;
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 15px var(--primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#custom-cursor::after {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: var(--primary);
+    border-radius: 50%;
+}
+
 /* UI Elements */
 #ui-overlay {
     position: absolute;

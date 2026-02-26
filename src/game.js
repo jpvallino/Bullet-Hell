@@ -17,13 +17,14 @@ let keys = {};
 let player = new Player();
 let spawnTimer = 0;
 
-// Pools
 const pools = {
     bullet: Utils.createPool(() => new Bullet()),
     particle: Utils.createPool(() => new Particle()),
     enemy: Utils.createPool(() => new Enemy()),
     magicCircle: Utils.createPool(() => new MagicCircle())
 };
+
+const customCursor = document.getElementById('custom-cursor');
 
 function resetGame() {
     player = new Player();
@@ -51,10 +52,14 @@ function endGame() {
     document.getElementById('final-score').innerText = `Pontos: ${player.score}`;
 }
 
-// Input Listeners
 window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
 window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
-window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('mousemove', (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    customCursor.style.left = mouse.x + 'px';
+    customCursor.style.top = mouse.y + 'px';
+});
 
 window.addEventListener('click', (e) => {
     if (gameActive && !paused && player.mode === 'Pistol') {
@@ -64,8 +69,20 @@ window.addEventListener('click', (e) => {
 });
 
 // Upgrade Choices
-upgradePistolBtn.onclick = () => { player.mode = 'Pistol'; player.vulnerable = true; paused = false; menuOverlay.classList.add('hidden'); };
-upgradeSwordBtn.onclick = () => { player.mode = 'Sword'; player.vulnerable = true; paused = false; menuOverlay.classList.add('hidden'); };
+upgradePistolBtn.onclick = () => {
+    player.mode = 'Pistol';
+    player.vulnerable = true;
+    paused = false;
+    menuOverlay.classList.add('hidden');
+    customCursor.classList.remove('hidden');
+};
+upgradeSwordBtn.onclick = () => {
+    player.mode = 'Sword';
+    player.vulnerable = true;
+    paused = false;
+    menuOverlay.classList.add('hidden');
+    customCursor.classList.remove('hidden');
+};
 startBtn.onclick = resetGame;
 restartBtn.onclick = resetGame;
 
