@@ -28,17 +28,18 @@ class Bullet {
 }
 
 class Player {
-    constructor() {
-        this.reset();
-    }
+    constructor() { this.reset(); }
     reset() {
         this.x = window.innerWidth / 2; this.y = window.innerHeight / 2;
         this.radius = 18; this.mode = 'PreUpgrade';
-        this.hp = 100; this.score = 0;
+        this.hp = 200; // Vida aumentada para 200
+        this.maxHp = 200;
+        this.score = 0;
         this.speed = 6; this.swordAngle = 0;
         this.swordLength = 85; this.swordCount = 1;
         this.pistolCooldown = 250; this.lastShoot = 0;
         this.bulletSize = 6;
+        this.vulnerable = false;
     }
     update(keys, mouse) {
         if (keys['w']) this.y -= this.speed; if (keys['s']) this.y += this.speed;
@@ -68,14 +69,15 @@ class Enemy {
     init(type, x, y) {
         this.type = type; this.x = x; this.y = y;
         this.radius = 22; this.active = true; this.timer = 0; this.swordRot = 0;
+        this.swordLen = 25; // Espada do inimigo maior
         this.setup();
     }
     setup() {
         switch (this.type) {
-            case 'Swordsman': this.speed = 2.4; this.points = 1; this.color = '#ff4444'; break;
-            case 'Archer': this.speed = 1.4; this.points = 2; this.color = '#cc44ff'; break;
-            case 'Mage': this.speed = 3.5; this.points = 3; this.color = '#44ffff'; this.isStatic = false; break;
-            case 'Grenadier': this.speed = 3.8; this.points = 2; this.color = '#ffaa44'; break;
+            case 'Swordsman': this.speed = 2.4; this.points = 2; this.color = '#ff4444'; break; // Pontos 1 -> 2
+            case 'Archer': this.speed = 1.4; this.points = 3; this.color = '#cc44ff'; break;    // Pontos 2 -> 3
+            case 'Mage': this.speed = 3.5; this.points = 4; this.color = '#44ffff'; this.isStatic = false; break; // Pontos 3 -> 4
+            case 'Grenadier': this.speed = 3.8; this.points = 3; this.color = '#ffaa44'; break; // Pontos 2 -> 3
         }
     }
     update(player, pool) {
@@ -84,7 +86,8 @@ class Enemy {
         switch (this.type) {
             case 'Swordsman':
                 this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;
-                this.swordRot += 0.08; break;
+                this.swordRot += 0.04; // Gira mais lento (0.08 -> 0.04)
+                break;
             case 'Archer':
                 if (dist > 300) { this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed; }
                 else if (dist < 250) { this.x -= (dx / dist) * this.speed; this.y -= (dy / dist) * this.speed; }
@@ -112,7 +115,7 @@ class Enemy {
         if (this.type === 'Swordsman') {
             ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
             ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.swordRot);
-            ctx.fillStyle = '#fff'; ctx.fillRect(this.radius + 5, -2, 18, 4); ctx.restore();
+            ctx.fillStyle = '#fff'; ctx.fillRect(this.radius + 5, -3, this.swordLen, 6); ctx.restore();
         } else if (this.type === 'Archer') {
             ctx.beginPath(); ctx.moveTo(this.x, this.y - this.radius); ctx.lineTo(this.x + this.radius, this.y + this.radius); ctx.lineTo(this.x - this.radius, this.y + this.radius); ctx.closePath(); ctx.fill();
         } else if (this.type === 'Mage') {

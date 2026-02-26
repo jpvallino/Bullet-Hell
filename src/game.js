@@ -26,7 +26,9 @@ function resetGame() {
 }
 
 function updateUI() {
-    scoreEl.innerText = player.score; healthBar.style.width = `${player.hp}%`;
+    scoreEl.innerText = player.score;
+    let hpPercent = (player.hp / player.maxHp) * 100;
+    healthBar.style.width = `${hpPercent}%`;
     if (player.hp <= 0 && gameActive) endGame();
 }
 
@@ -66,13 +68,13 @@ function showUpgradeMenu() {
         options = [
             { id: 's1', icon: '📏', title: 'LÂMINA LONGA', desc: 'Aumenta o alcance da sua espada.', cb: () => player.swordLength += 25 },
             { id: 's2', icon: '➕', title: 'MAIS LÂMINAS', desc: 'Adiciona uma lâmina extra ao redor do corpo. (Máx 3)', cb: () => player.swordCount = Math.min(3, player.swordCount + 1) },
-            { id: 's3', icon: '❤️', title: 'REPARO', desc: 'Recupera 50% da vida total.', cb: () => player.hp = Math.min(100, player.hp + 50) }
+            { id: 's3', icon: '❤️', title: 'REPARO', desc: 'Recupera 50% da vida total.', cb: () => player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.5) }
         ];
     } else if (player.mode === 'Pistol') {
         options = [
             { id: 'p1', icon: '⚡', title: 'DISPARO RÁPIDO', desc: 'Reduz o tempo entre tiros drasticamente.', cb: () => player.pistolCooldown *= 0.7 },
             { id: 'p2', icon: '🔥', title: 'BALAS GRANDES', desc: 'Balas maiores e mais fáceis de atingir inimigos.', cb: () => player.bulletSize += 4 },
-            { id: 'p3', icon: '❤️', title: 'REPARO', desc: 'Recupera 50% da vida total.', cb: () => player.hp = Math.min(100, player.hp + 50) }
+            { id: 'p3', icon: '❤️', title: 'REPARO', desc: 'Recupera 50% da vida total.', cb: () => player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.5) }
         ];
     }
 
@@ -92,6 +94,17 @@ function update() {
 
     pools.enemy.getAllActive().forEach(e => {
         e.update(player, pools); let d = Utils.dist(e.x, e.y, player.x, player.y);
+
+        // Colisão com a Espada do Inimigo Swordsman
+        if (e.type === 'Swordsman') {
+            let swordX = e.x + Math.cos(e.swordRot) * (e.radius + e.swordLen / 2);
+            let swordY = e.y + Math.sin(e.swordRot) * (e.radius + e.swordLen / 2);
+            if (Utils.dist(player.x, player.y, swordX, swordY) < player.radius + 10) {
+                player.hp -= 1.5; // Dano contínuo da espada
+                updateUI();
+            }
+        }
+
         if (player.mode === 'PreUpgrade') {
             if (d < e.radius + player.radius) {
                 e.active = false; player.score += e.points; Utils.burst(e.x, e.y, e.color, pools.particle);
@@ -125,9 +138,8 @@ function update() {
     pools.bullet.getAllActive().forEach(b => {
         b.update();
         if (!b.isFriendly && b.active) {
-            // Colisão com Balas Inimigas SEMPRE causa dano
             if (Utils.dist(b.x, b.y, player.x, player.y) < player.radius + b.size) {
-                player.hp -= 10; b.active = false; updateUI();
+                player.hp -= 15; b.active = false; updateUI();
             }
             if (player.mode === 'Pistol') {
                 pools.bullet.getAllActive().forEach(fb => {
@@ -136,7 +148,11 @@ function update() {
             }
         }
     });
-    pools.magicCircle.getAllActive().forEach(mc => { mc.update(); if (mc.isActivated && Utils.dist(mc.x, mc.y, player.x, player.y) < mc.radius) { player.hp -= 0.6; updateUI(); } });
+
+    pools.magicCircle.getAllActive().forEach(mc => {
+        mc.update();
+        if (mc.isActivated && Utils.dist(mc.x, mc.y, player.x, player.y) < mc.radius) { player.hp -= 1.0; updateUI(); }
+    });
     pools.particle.getAllActive().forEach(p => p.update());
 }
 
