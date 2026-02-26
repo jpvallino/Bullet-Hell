@@ -1,0 +1,206 @@
+:root {
+    --primary: #00f2ff;
+    --secondary: #ff00ea;
+    --bg: #0a0a0c;
+    --glass: rgba(255, 255, 255, 0.05);
+    --text: #ffffff;
+    --font-main: 'Outfit', sans-serif;
+    --font-heading: 'Space+Grotesk', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-main);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at center, #1a1a2e 0%, #000 100%);
+    overflow: hidden;
+}
+
+#gameCanvas {
+    display: block;
+    cursor: none;
+}
+
+/* UI Elements */
+#ui-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.score-container {
+    background: var(--glass);
+    padding: 10px 20px;
+    border-left: 4px solid var(--primary);
+    backdrop-filter: blur(10px);
+    display: inline-block;
+}
+
+.score-container .label {
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    color: var(--primary);
+    display: block;
+}
+
+#score {
+    font-size: 2.5rem;
+    font-weight: 700;
+    font-family: var(--font-heading);
+}
+
+#health-bar-container {
+    width: 200px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#health-bar {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    transition: width 0.3s ease;
+}
+
+/* Overlays */
+#menu-overlay,
+#death-overlay,
+#start-screen {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(15px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    transition: opacity 0.5s ease;
+}
+
+.hidden {
+    display: none !important;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.menu-content {
+    background: var(--glass);
+    padding: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    text-align: center;
+    max-width: 600px;
+}
+
+h1 {
+    font-family: var(--font-heading);
+    font-size: 3rem;
+    margin-bottom: 20px;
+    background: linear-gradient(to right, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.upgrade-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.upgrade-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.upgrade-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-5px);
+    border-color: var(--primary);
+    box-shadow: 0 0 20px var(--primary);
+}
+
+.upgrade-btn .icon {
+    font-size: 3rem;
+}
+
+button#start-btn,
+button#restart-btn {
+    margin-top: 30px;
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 5px;
+}
+
+button#start-btn:hover,
+button#restart-btn:hover {
+    background: var(--primary);
+    color: black;
+    box-shadow: 0 0 30px var(--primary);
+}
+
+#notifications {
+    font-size: 1.1rem;
+    color: var(--secondary);
+    font-weight: bold;
+    text-shadow: 0 0 10px var(--secondary);
+}
+
+/* Animations */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.logo {
+    animation: pulse 2s infinite ease-in-out;
+}

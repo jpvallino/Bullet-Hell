@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bullet Hell: The Ascension</title>
+    <link rel="stylesheet" href="src/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&family=Space+Grotesk:wght@300;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-overlay">
+            <div class="score-container">
+                <span class="label">PONTOS</span>
+                <span id="score">0</span>
+            </div>
+            <div id="health-bar-container">
+                <div id="health-bar"></div>
+            </div>
+            <div id="notifications"></div>
+        </div>
+        
+        <div id="menu-overlay" class="hidden">
+            <div class="menu-content">
+                <h1>ASCENSÃO ALCANÇADA</h1>
+                <p>Escolha sua nova trilha de combate:</p>
+                <div class="upgrade-options">
+                    <button id="upgrade-pistol" class="upgrade-btn">
+                        <span class="icon">🔫</span>
+                        <div class="details">
+                            <h3>PISTOLA</h3>
+                            <p>Transforma o corpo em vulnerável, mas dispara projéteis que anulam ataques inimigos.</p>
+                        </div>
+                    </button>
+                    <button id="upgrade-sword" class="upgrade-btn">
+                        <span class="icon">⚔️</span>
+                        <div class="details">
+                            <h3>ESPADA LAMINAR</h3>
+                            <p>Introduz uma lâmina rotativa que corta tudo. O corpo é um ponto fraco.</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="death-overlay" class="hidden">
+            <div class="menu-content">
+                <h1>GAME OVER</h1>
+                <p id="final-score">Pontos: 0</p>
+                <button id="restart-btn">Tentar Novamente</button>
+            </div>
+        </div>
+
+        <div id="start-screen">
+            <div class="menu-content">
+                <h1 class="logo">BULLET HELL</h1>
+                <p>Mova-se para eliminar inimigos (Toque mortal pré-upgrade)</p>
+                <button id="start-btn">INICIAR COMBATE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="src/utils.js"></script>
+    <script src="src/entities.js"></script>
+    <script src="src/game.js" defer></script>
+</body>
+</html>
