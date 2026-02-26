@@ -21,9 +21,22 @@ let spawnTimer = 0;
 const pools = {
     bullet: Utils.createPool(() => new Bullet()),
     particle: Utils.createPool(() => new Particle()),
-    enemy: Utils.createPool((type, x, y) => new Enemy(type, x, y)),
+    enemy: Utils.createPool(() => new Enemy()),
     magicCircle: Utils.createPool(() => new MagicCircle())
 };
+function resetGame() {
+    player = new Player();
+    pools.bullet.clear();
+    pools.particle.clear();
+    pools.enemy.clear();
+    pools.magicCircle.clear();
+    gameActive = true;
+    paused = false;
+    deathOverlay.classList.add('hidden');
+    menuOverlay.classList.add('hidden');
+    startScreen.classList.add('hidden');
+    updateUI();
+}
 
 // UI Handling
 function updateUI() {
@@ -40,21 +53,11 @@ function endGame() {
     document.getElementById('final-score').innerText = `Pontos: ${player.score}`;
 }
 
-function resetGame() {
-    player = new Player();
-    enemies = [];
-    pools.bullet.clear();
-    pools.particle.clear();
-    pools.magicCircle.clear();
-    gameActive = true;
-    paused = false;
-    deathOverlay.classList.add('hidden');
-    menuOverlay.classList.add('hidden');
-    startScreen.classList.add('hidden');
-    updateUI();
-}
-
 // Input
+let keys = {};
+window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
+window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
 window.addEventListener('mousemove', (e) => {
     mouse.x = e.clientX;
     mouse.y = e.clientY;
@@ -124,7 +127,7 @@ function spawnEnemy() {
 function update() {
     if (!gameActive || paused) return;
 
-    player.update(mouse.x, mouse.y);
+    player.update(keys);
     spawnEnemy();
 
     const activeEnemies = pools.enemy.getAllActive();

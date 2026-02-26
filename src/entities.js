@@ -37,19 +37,23 @@ class Player {
         this.x = window.innerWidth / 2;
         this.y = window.innerHeight / 2;
         this.radius = 15;
-        this.mode = 'PreUpgrade'; // PreUpgrade, Pistol, Sword
+        this.mode = 'PreUpgrade';
         this.vulnerable = false;
         this.hp = 100;
         this.score = 0;
         this.swordAngle = 0;
         this.swordLength = 80;
+        this.speed = 5;
     }
-    update(mouseX, mouseY) {
-        this.x = mouseX;
-        this.y = mouseY;
-        if (this.mode === 'Sword') {
-            this.swordAngle += 0.1;
-        }
+    update(keys) {
+        if (keys['w'] || keys['ArrowUp']) this.y -= this.speed;
+        if (keys['s'] || keys['ArrowDown']) this.y += this.speed;
+        if (keys['a'] || keys['ArrowLeft']) this.x -= this.speed;
+        if (keys['d'] || keys['ArrowRight']) this.x += this.speed;
+
+        // Mantém dentro da tela
+        this.x = Utils.clamp(this.x, this.radius, window.innerWidth - this.radius);
+        this.y = Utils.clamp(this.y, this.radius, window.innerHeight - this.radius);
     }
     draw(ctx) {
         ctx.save();
@@ -77,14 +81,17 @@ class Player {
 }
 
 class Enemy {
-    constructor(type, x, y) {
-        this.active = true;
+    constructor() {
+        this.active = false;
+    }
+    init(type, x, y) {
         this.type = type;
         this.x = x;
         this.y = y;
         this.radius = 20;
         this.hp = 1;
         this.timer = 0;
+        this.active = true;
         this.setup();
     }
     setup() {
