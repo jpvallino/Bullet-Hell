@@ -32,8 +32,7 @@ class Player {
     reset() {
         this.x = window.innerWidth / 2; this.y = window.innerHeight / 2;
         this.radius = 18; this.mode = 'PreUpgrade';
-        this.hp = 200; // Vida aumentada para 200
-        this.maxHp = 200;
+        this.hp = 200; this.maxHp = 200;
         this.score = 0;
         this.speed = 6; this.swordAngle = 0;
         this.swordLength = 85; this.swordCount = 1;
@@ -46,7 +45,7 @@ class Player {
         this.dashStartTime = 0;
         this.dashDuration = 200; // ms
         this.dashCooldown = 5000; // ms
-        this.lastDash = -5000; // Start ready
+        this.lastDash = -5000;
         this.dashSpeedMult = 3.5;
 
         this.isPunching = false;
@@ -76,19 +75,18 @@ class Player {
         this.y = Utils.clamp(this.y, this.radius, window.innerHeight - this.radius);
         this.swordAngle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
 
-        // Punch Logic
         if (this.isPunching && now - this.punchStartTime > this.punchDuration) {
             this.isPunching = false;
         }
     }
     draw(ctx) {
         ctx.save(); ctx.translate(this.x, this.y);
-
-        // Visual indicator for dash ready
         const now = Date.now();
+
+        // Dash Ready Visual
         if (now - this.lastDash > this.dashCooldown) {
-            ctx.beginPath(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-            ctx.arc(0, 0, this.radius + 5, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.lineWidth = 2;
+            ctx.arc(0, 0, this.radius + 8, 0, Math.PI * 2); ctx.stroke();
         }
 
         if (this.mode === 'Sword') {
@@ -97,6 +95,15 @@ class Player {
                 ctx.save(); ctx.rotate(this.swordAngle + (i * Math.PI * 2 / this.swordCount));
                 ctx.fillRect(0, -4, this.swordLength, 8); ctx.restore();
             }
+        }
+
+        // Punch Aim Indicator (Pre-Upgrade)
+        if (this.mode === 'PreUpgrade' && !this.isPunching) {
+            ctx.save(); ctx.rotate(this.swordAngle);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+            ctx.strokeRect(this.radius + 5, -8, 20, 16);
+            ctx.restore();
         }
 
         // Punch Visual
@@ -113,7 +120,6 @@ class Player {
         ctx.shadowBlur = this.isDashing ? 30 : 15;
         ctx.shadowColor = ctx.fillStyle;
 
-        // Trail effect if dashing
         if (this.isDashing) {
             ctx.globalAlpha = 0.5;
             ctx.beginPath(); ctx.arc(-10, 0, this.radius, 0, Math.PI * 2); ctx.fill();
@@ -152,7 +158,7 @@ class Enemy {
             case 'Archer':
                 if (dist > 300) { this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed; }
                 else if (dist < 250) { this.x -= (dx / dist) * this.speed; this.y -= (dy / dist) * this.speed; }
-                if (Math.round(this.timer * 60) % 300 === 0) pool.bullet.get(this.x, this.y, Math.atan2(dy, dx), false);
+                if (Math.round(this.timer * 60) % 180 === 0) pool.bullet.get(this.x, this.y, Math.atan2(dy, dx), false);
                 break;
             case 'Mage':
                 if (!this.isStatic) {

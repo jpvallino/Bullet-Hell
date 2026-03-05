@@ -22,7 +22,7 @@ function resetGame() {
     player.reset(); pools.bullet.clear(); pools.particle.clear(); pools.enemy.clear(); pools.magicCircle.clear();
     gameActive = true; paused = false; nextThreshold = 100;
     deathOverlay.classList.add('hidden'); menuOverlay.classList.add('hidden'); startScreen.classList.add('hidden');
-    customCursor.classList.add('hidden'); updateUI();
+    customCursor.classList.remove('hidden'); updateUI();
 }
 
 function updateUI() {
