@@ -4,8 +4,8 @@ class Bullet {
         this.x = x; this.y = y; this.angle = angle;
         this.isFriendly = isFriendly; this.type = type;
         this.active = true;
-        this.size = type === 'spear' ? 10 : 6;
-        this.speed = type === 'spear' ? 5.5 : 7;
+        this.size = type === 'spear' ? 10 : (type === 'whip' ? 12 : 6);
+        this.speed = type === 'spear' ? 5.5 : (type === 'whip' ? 12 : 7);
     }
     update() {
         this.x += Math.cos(this.angle) * this.speed;
@@ -20,10 +20,47 @@ class Bullet {
         if (this.type === 'spear') {
             ctx.translate(this.x, this.y); ctx.rotate(this.angle);
             ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-12, -6); ctx.lineTo(-12, 6); ctx.closePath();
+        } else if (this.type === 'whip') {
+            ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+            ctx.fillStyle = '#fff'; ctx.shadowColor = '#fff';
+            ctx.fillRect(-15, -2, 30, 4);
         } else {
             ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         }
         ctx.fill(); ctx.restore();
+    }
+}
+
+class Whip {
+    constructor() { this.active = false; this.isReturning = false; }
+    init(x, y, angle) {
+        this.x = x; this.y = y; this.angle = angle; this.active = true;
+        this.startX = x; this.startY = y; this.timer = 0; this.isReturning = false;
+        this.speed = 10; this.maxDist = 500;
+    }
+    update(player) {
+        if (!this.active) return;
+        if (!this.isReturning) {
+            this.x += Math.cos(this.angle) * this.speed;
+            this.y += Math.sin(this.angle) * this.speed;
+            if (Utils.dist(this.x, this.y, this.startX, this.startY) >= this.maxDist) {
+                this.isReturning = true;
+                this.timer = Date.now();
+            }
+        } else {
+            if (Date.now() - this.timer > 3000) {
+                let dx = player.x - this.x, dy = player.y - this.y;
+                let d = Math.sqrt(dx * dx + dy * dy);
+                if (d < 20) { this.active = false; player.lastWhipReturn = Date.now(); }
+                else { this.x += (dx / d) * 15; this.y += (dy / d) * 15; }
+            }
+        }
+    }
+    draw(ctx) {
+        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.shadowBlur = 15; ctx.shadowColor = '#fff';
+        ctx.beginPath(); ctx.moveTo(-30, 0); ctx.bezierCurveTo(-10, 10, 10, -10, 30, 0); ctx.stroke();
+        ctx.restore();
     }
 }
 
@@ -54,6 +91,11 @@ class Player {
         this.punchRange = 45;
         this.lastPunch = 0;
         this.punchCooldown = 400; // ms
+
+        this.whipOwned = false;
+        this.lastWhipShoot = 0;
+        this.lastWhipReturn = 0;
+        this.whipCooldown = 3000;
     }
     update(keys, mouse) {
         let currentSpeed = this.speed;
@@ -144,16 +186,23 @@ class Enemy {
             case 'Swordsman': this.speed = 2.4; this.points = 2; this.color = '#ff4444'; break; // Pontos 1 -> 2
             case 'Archer': this.speed = 1.4; this.points = 3; this.color = '#cc44ff'; break;    // Pontos 2 -> 3
             case 'Mage': this.speed = 3.5; this.points = 4; this.color = '#44ffff'; this.isStatic = false; break; // Pontos 3 -> 4
-            case 'Grenadier': this.speed = 3.8; this.points = 3; this.color = '#ffaa44'; break; // Pontos 2 -> 3
+            case 'Grenadier': this.speed = 3.8; this.points = 3; this.color = '#ffaa44'; this.isDead = false; this.deathTime = 0; break;
+            case 'Ghost': this.speed = 2.0; this.points = 4; this.color = 'rgba(255,255,255,0)'; break;
         }
     }
     update(player, pool) {
+        if (this.type === 'Grenadier' && this.isDead) {
+            if (Date.now() - this.deathTime >= 3000) {
+                this.active = false; this.explode(pool);
+            }
+            return;
+        }
         this.timer += 0.016; let dx = player.x - this.x, dy = player.y - this.y;
         let dist = Math.sqrt(dx * dx + dy * dy);
         switch (this.type) {
             case 'Swordsman':
                 this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;
-                this.swordRot += 0.04; // Gira mais lento (0.08 -> 0.04)
+                this.swordRot += 0.04;
                 break;
             case 'Archer':
                 if (dist > 300) { this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed; }
@@ -169,7 +218,12 @@ class Enemy {
                 break;
             case 'Grenadier':
                 this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;
-                if (this.timer >= 8 || dist < this.radius + player.radius) { this.active = false; this.explode(pool); }
+                if (dist < this.radius + player.radius) { this.isDead = true; this.deathTime = Date.now(); player.hp -= 20; updateUI(); }
+                break;
+            case 'Ghost':
+                this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;
+                let opacity = Utils.clamp(1 - (dist / 600), 0, 0.75);
+                this.color = `rgba(255,255,255,${opacity})`;
                 break;
         }
     }
