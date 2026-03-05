@@ -73,7 +73,8 @@ class Player {
         this.score = 0;
         this.speed = 6; this.swordAngle = 0;
         this.swordLength = 85; this.swordCount = 1;
-        this.pistolCooldown = 150; this.lastShoot = 0;
+        this.pistolCooldown = 100; // 100ms as requested
+        this.lastShoot = 0;
         this.bulletSize = 6;
         this.vulnerable = false;
 
@@ -221,7 +222,7 @@ class Enemy {
                 break;
             case 'Ghost':
                 this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;
-                let opacity = Utils.clamp(1 - (dist / 600), 0, 0.75);
+                let opacity = Utils.clamp(0.25 * (1 - (dist / 600)), 0, 0.25);
                 this.color = `rgba(255,255,255,${opacity})`;
                 break;
         }

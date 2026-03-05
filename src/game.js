@@ -73,25 +73,43 @@ function showUpgradeMenu() {
     paused = true; menuOverlay.classList.remove('hidden');
     upgradeOptionsEl.innerHTML = '';
 
-    let allOptions = [
-        { id: 'pistol', icon: '🔫', title: 'PISTOLA', desc: 'Atire no mouse para destruir inimigos e balas.', cb: () => { player.mode = 'Pistol'; player.vulnerable = true; customCursor.classList.remove('hidden'); } },
-        { id: 'sword', icon: '⚔️', title: 'ESPADA', desc: 'Lâmina rotativa letal. O corpo se torna vulnerável.', cb: () => { player.mode = 'Sword'; player.vulnerable = true; customCursor.classList.remove('hidden'); } },
-        { id: 'whip', icon: '➰', title: 'CHICOTE', desc: 'Lança um chicote que volta após 1s.', cb: () => { player.mode = 'Whip'; player.vulnerable = true; } },
-        { id: 'hp', icon: '❤️', title: 'SAÚDE', desc: 'Aumenta HP máximo em 50 e cura.', cb: () => { player.maxHp += 50; player.hp = player.maxHp; } },
-        { id: 'speed', icon: '👟', title: 'VELOCIDADE', desc: 'Aumenta velocidade de movimento.', cb: () => { player.speed += 1.5; } },
-        { id: 'dash', icon: '💨', title: 'DASH+', desc: 'Reduz cooldown do dash em 1s.', cb: () => { player.dashCooldown -= 1000; } },
-        { id: 'punch', icon: '🥊', title: 'MEGA SOCO', desc: 'Aumenta o alcance do soco.', cb: () => { player.punchRange += 20; } },
-        { id: 'armor', icon: '🛡️', title: 'ARMADURA', desc: 'Reduz todo dano recebido.', cb: () => { player.damageReduc = (player.damageReduc || 1) * 0.8; } },
-        { id: 'luck', icon: '🍀', title: 'SORTE', desc: 'Inimigos dão mais pontos.', cb: () => { player.scoreMult = (player.scoreMult || 1) + 0.5; } },
-        { id: 'regen', icon: '🧪', title: 'REGENERAÇÃO', desc: 'Recupera vida ao matar inimigos.', cb: () => { player.lifesteal = (player.lifesteal || 0) + 2; } }
-    ];
-
-    // Filter out already owned base weapons if needed, or simply pick 3 random
     let selected = [];
-    let tempOptions = [...allOptions];
-    for (let i = 0; i < 3; i++) {
-        let idx = Math.floor(Math.random() * tempOptions.length);
-        selected.push(tempOptions.splice(idx, 1)[0]);
+    if (nextThreshold === 100) {
+        // Primeira escolha: Armas
+        selected = [
+            { id: 'pistol', icon: '🔫', title: 'PISTOLA', desc: 'Atire no mouse para destruir inimigos e balas.', cb: () => { player.mode = 'Pistol'; player.vulnerable = true; customCursor.classList.remove('hidden'); } },
+            { id: 'sword', icon: '⚔️', title: 'ESPADA', desc: 'Lâmina rotativa letal. O corpo se torna vulnerável.', cb: () => { player.mode = 'Sword'; player.vulnerable = true; customCursor.classList.remove('hidden'); } },
+            { id: 'whip', icon: '➰', title: 'CHICOTE', desc: 'Lança um chicote que volta após 1s.', cb: () => { player.mode = 'Whip'; player.vulnerable = true; } }
+        ];
+    } else {
+        // Upgrades específicos por arma
+        const weaponPools = {
+            Pistol: [
+                { id: 'p1', icon: '⚡', title: 'DISPARO RÁPIDO', desc: 'Reduz o tempo entre tiros drasticamente.', cb: () => player.pistolCooldown *= 0.75 },
+                { id: 'p2', icon: '🔥', title: 'BALAS GRANDES', desc: 'Balas maiores e mais fáceis de atingir inimigos.', cb: () => player.bulletSize += 5 },
+                { id: 'p3', icon: '🛡️', title: 'ARMADURA', desc: 'Reduz todo dano recebido em 20%.', cb: () => player.damageReduc = (player.damageReduc || 1) * 0.8 },
+                { id: 'p4', icon: '🧪', title: 'SINERGIA', desc: 'Recupera vida ao destruir balas/inimigos.', cb: () => player.lifesteal = (player.lifesteal || 0) + 3 }
+            ],
+            Sword: [
+                { id: 's1', icon: '📏', title: 'LÂMINA LONGA', desc: 'Aumenta consideravelmente o alcance da espada.', cb: () => player.swordLength += 30 },
+                { id: 's2', icon: '➕', title: 'MAIS LÂMINAS', desc: 'Adiciona uma lâmina extra. (Máx 3)', cb: () => player.swordCount = Math.min(3, player.swordCount + 1) },
+                { id: 's3', icon: '❤️', title: 'REFORÇO', desc: 'Aumenta HP máximo em 50 e cura.', cb: () => { player.maxHp += 50; player.hp = player.maxHp; } },
+                { id: 's4', icon: '👟', title: 'AGILIDADE', desc: 'Aumenta a velocidade de movimento.', cb: () => player.speed += 1.5 }
+            ],
+            Whip: [
+                { id: 'w1', icon: '⏱️', title: 'RECARGA RÁPIDA', desc: 'Diminui o cooldown do chicote.', cb: () => player.whipCooldown *= 0.7 },
+                { id: 'w2', icon: '🍀', title: 'SORTE', desc: 'Ganhe 50% a mais de pontos.', cb: () => player.scoreMult = (player.scoreMult || 1) + 0.5 },
+                { id: 'w3', icon: '💨', title: 'IMPULSO', desc: 'Reduz drasticamente o cooldown do Dash.', cb: () => player.dashCooldown -= 1500 },
+                { id: 'w4', icon: '🔋', title: 'BATERIA', desc: 'Aumenta HP máximo e cura.', cb: () => { player.maxHp += 40; player.hp = player.maxHp; } }
+            ]
+        };
+
+        let pool = weaponPools[player.mode] || [];
+        let tempPool = [...pool];
+        while (selected.length < 3 && tempPool.length > 0) {
+            let idx = Math.floor(Math.random() * tempPool.length);
+            selected.push(tempPool.splice(idx, 1)[0]);
+        }
     }
 
     selected.forEach(opt => {
