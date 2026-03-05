@@ -79,11 +79,22 @@ function showUpgradeMenu() {
         selected = [
             { id: 'pistol', icon: '🔫', title: 'PISTOLA', desc: 'Atire no mouse para destruir inimigos e balas.', cb: () => { player.mode = 'Pistol'; player.vulnerable = true; customCursor.classList.remove('hidden'); } },
             { id: 'sword', icon: '⚔️', title: 'ESPADA', desc: 'Lâmina rotativa letal. O corpo se torna vulnerável.', cb: () => { player.mode = 'Sword'; player.vulnerable = true; customCursor.classList.remove('hidden'); } },
-            { id: 'whip', icon: '➰', title: 'CHICOTE', desc: 'Lança um chicote que volta após 1s.', cb: () => { player.mode = 'Whip'; player.vulnerable = true; } }
+            { id: 'whip', icon: '➰', title: 'CHICOTE', desc: 'Lança um chicote que volta após 1s.', cb: () => { player.mode = 'Whip'; player.vulnerable = true; } },
+            { id: 'punch', icon: '🥊', title: 'SOCO', desc: 'Continue com o soco e ganhe bônus de soco/agilidade.', cb: () => { player.mode = 'Punch'; player.vulnerable = true; } }
         ];
+        // Selecionar 3 das 4 armas disponíveis no início
+        let weapons = [...selected];
+        selected = [];
+        for (let i = 0; i < 3; i++) selected.push(weapons.splice(Math.floor(Math.random() * weapons.length), 1)[0]);
     } else {
         // Upgrades específicos por arma
         const weaponPools = {
+            Punch: [
+                { id: 'pu1', icon: '🥊', title: 'MEGA SOCO', desc: 'Aumenta consideravelmente o alcance do soco.', cb: () => player.punchRange += 25 },
+                { id: 'pu2', icon: '⚡', title: 'REFLEXOS', desc: 'Reduz o cooldown do soco e do dash.', cb: () => { player.punchCooldown *= 0.8; player.dashCooldown -= 1000; } },
+                { id: 'pu3', icon: '🛡️', title: 'ARMADURA', desc: 'Reduz todo dano recebido em 20%.', cb: () => player.damageReduc = (player.damageReduc || 1) * 0.8 },
+                { id: 'pu4', icon: '🧪', title: 'VIGOR', desc: 'Mais HP e regeneração ao matar.', cb: () => { player.maxHp += 50; player.hp = player.maxHp; player.lifesteal = (player.lifesteal || 0) + 2; } }
+            ],
             Pistol: [
                 { id: 'p1', icon: '⚡', title: 'DISPARO RÁPIDO', desc: 'Reduz o tempo entre tiros drasticamente.', cb: () => player.pistolCooldown *= 0.75 },
                 { id: 'p2', icon: '🔥', title: 'BALAS GRANDES', desc: 'Balas maiores e mais fáceis de atingir inimigos.', cb: () => player.bulletSize += 5 },
@@ -103,7 +114,6 @@ function showUpgradeMenu() {
                 { id: 'w4', icon: '🔋', title: 'BATERIA', desc: 'Aumenta HP máximo e cura.', cb: () => { player.maxHp += 40; player.hp = player.maxHp; } }
             ]
         };
-
         let pool = weaponPools[player.mode] || [];
         let tempPool = [...pool];
         while (selected.length < 3 && tempPool.length > 0) {
@@ -156,19 +166,31 @@ function update() {
             }
         }
 
-        if (player.mode === 'PreUpgrade') {
+        if (player.mode === 'PreUpgrade' || player.mode === 'Punch') {
             // Only kill if punching
-            if (player.isPunching) {
+            if (player.isPunching && !e.isDead) { // Check !isDead so we don't double hit Grenadier
                 let punchX = player.x + Math.cos(player.swordAngle) * (player.radius + 15);
                 let punchY = player.y + Math.sin(player.swordAngle) * (player.radius + 15);
-                if (Utils.dist(e.x, e.y, punchX, punchY) < e.radius + 20) {
-                    e.active = false; player.score += e.points; Utils.burst(e.x, e.y, e.color, pools.particle);
+                if (Utils.dist(e.x, e.y, punchX, punchY) < e.radius + 20 + (player.punchRange - 45)) {
+                    if (e.type === 'Grenadier') {
+                        e.isDead = true; e.deathTime = Date.now();
+                    } else {
+                        e.active = false;
+                    }
+                    player.score += e.points * (player.scoreMult || 1);
+                    Utils.burst(e.x, e.y, e.color, pools.particle);
                     updateUI(); if (player.score >= nextThreshold) showUpgradeMenu();
                 }
             }
             // Touching enemy now deals damage in PreUpgrade too (since we have a weapon)
-            if (d < e.radius + player.radius) {
-                player.hp -= 10; e.active = false; updateUI();
+            if (d < e.radius + player.radius && !e.isDead) {
+                player.hp -= 10 * (player.damageReduc || 1);
+                if (e.type === 'Grenadier') {
+                    e.isDead = true; e.deathTime = Date.now();
+                } else {
+                    e.active = false;
+                }
+                updateUI();
             }
         } else {
             if (d < e.radius + player.radius && !e.isDead) { player.hp -= 20 * (player.damageReduc || 1); e.active = false; updateUI(); }
@@ -196,7 +218,12 @@ function update() {
         pools.bullet.getAllActive().forEach(b => {
             if (b.isFriendly && b.active && e.active) {
                 if (Utils.dist(b.x, b.y, e.x, e.y) < e.radius + b.size) {
-                    e.active = false; b.active = false; player.score += e.points * (player.scoreMult || 1);
+                    if (e.type === 'Grenadier') {
+                        e.isDead = true; e.deathTime = Date.now();
+                    } else {
+                        e.active = false;
+                    }
+                    b.active = false; player.score += e.points * (player.scoreMult || 1);
                     Utils.burst(e.x, e.y, e.color, pools.particle); updateUI();
                     if (player.lifesteal) player.hp = Math.min(player.maxHp, player.hp + player.lifesteal);
                     if (player.score >= nextThreshold) showUpgradeMenu();
@@ -232,7 +259,7 @@ function spawnEnemy() {
         spawnTimer = 0; let side = Math.floor(Math.random() * 4), x, y;
         if (side === 0) { x = Math.random() * canvas.width; y = -50; } else if (side === 1) { x = canvas.width + 50; y = Math.random() * canvas.height; }
         else if (side === 2) { x = Math.random() * canvas.width; y = canvas.height + 50; } else { x = -50; y = Math.random() * canvas.height; }
-        const types = player.score < 50 ? ['Swordsman'] : player.score < 150 ? ['Swordsman', 'Archer'] : ['Swordsman', 'Archer', 'Mage', 'Grenadier', 'Ghost'];
+        const types = player.score < 50 ? ['Swordsman', 'T-Rex'] : player.score < 150 ? ['Swordsman', 'Archer', 'T-Rex'] : ['Swordsman', 'Archer', 'Mage', 'Grenadier', 'Ghost', 'T-Rex'];
         pools.enemy.get(types[Math.floor(Math.random() * types.length)], x, y);
     }
 }

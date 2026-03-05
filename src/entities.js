@@ -179,20 +179,23 @@ class Enemy {
         this.type = type; this.x = x; this.y = y;
         this.radius = 22; this.active = true; this.timer = 0; this.swordRot = 0;
         this.swordLen = 25; // Espada do inimigo maior
-        this.setup();
+        this.isDead = false; // Initialize isDead for all enemies
+        this.deathTime = 0; // Initialize deathTime for all enemies
+        this.setup(x, y); // Pass x, y to setup for T-Rex
     }
-    setup() {
+    setup(x, y) {
         switch (this.type) {
             case 'Swordsman': this.speed = 2.4; this.points = 2; this.color = '#ff4444'; break; // Pontos 1 -> 2
             case 'Archer': this.speed = 1.4; this.points = 3; this.color = '#cc44ff'; break;    // Pontos 2 -> 3
             case 'Mage': this.speed = 3.5; this.points = 4; this.color = '#44ffff'; this.isStatic = false; break; // Pontos 3 -> 4
             case 'Grenadier': this.speed = 3.8; this.points = 3; this.color = '#ffaa44'; this.isDead = false; this.deathTime = 0; break;
             case 'Ghost': this.speed = 2.0; this.points = 4; this.color = 'rgba(255,255,255,0)'; break;
+            case 'T-Rex': this.speed = 4.5; this.points = 2; this.color = '#ff0000'; this.path = []; this.targetX = x; this.targetY = y; break;
         }
     }
     update(player, pool) {
-        if (this.type === 'Grenadier' && this.isDead) {
-            if (Date.now() - this.deathTime >= 3000) {
+        if (this.isDead) { // Check for ANY dead enemy with a timer (mainly Grenadier)
+            if (this.type === 'Grenadier' && Date.now() - this.deathTime >= 3000) {
                 this.active = false; this.explode(pool);
             }
             return;
@@ -225,6 +228,17 @@ class Enemy {
                 let opacity = Utils.clamp(0.25 * (1 - (dist / 600)), 0, 0.25);
                 this.color = `rgba(255,255,255,${opacity})`;
                 break;
+            case 'T-Rex':
+                if (Utils.dist(this.x, this.y, this.targetX, this.targetY) < 10) {
+                    this.targetX = this.x + (Math.random() - 0.5) * 400;
+                    this.targetY = this.y + (Math.random() - 0.5) * 400;
+                    this.targetX = Utils.clamp(this.targetX, 50, window.innerWidth - 50);
+                    this.targetY = Utils.clamp(this.targetY, 50, window.innerHeight - 50);
+                }
+                let tdx = this.targetX - this.x, tdy = this.targetY - this.y;
+                let tdist = Math.sqrt(tdx * tdx + tdy * tdy);
+                this.x += (tdx / tdist) * this.speed; this.y += (tdy / tdist) * this.speed;
+                break;
         }
     }
     explode(pool) {
@@ -232,8 +246,22 @@ class Enemy {
         for (let a = 0; a < Math.PI * 2; a += 0.8) pool.bullet.get(this.x, this.y, a, false);
     }
     draw(ctx) {
+        if (this.isDead && this.type === 'Grenadier') {
+            ctx.save(); ctx.fillStyle = 'rgba(255, 100, 0, 0.5)';
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + Math.sin(Date.now() * 0.005) * 5, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+            return;
+        }
         ctx.save(); ctx.fillStyle = this.color; ctx.shadowBlur = 10; ctx.shadowColor = this.color;
-        if (this.type === 'Swordsman') {
+        if (this.type === 'T-Rex') {
+            // Draw Path
+            ctx.restore(); ctx.save();
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)'; ctx.lineWidth = 2; ctx.setLineDash([10, 5]);
+            ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.targetX, this.targetY); ctx.stroke();
+            ctx.restore(); ctx.save();
+            ctx.fillStyle = this.color; ctx.shadowBlur = 15; ctx.shadowColor = this.color;
+            ctx.fillRect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+        } else if (this.type === 'Swordsman') {
             ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
             ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.swordRot);
             ctx.fillStyle = '#fff'; ctx.fillRect(this.radius + 5, -3, this.swordLen, 6); ctx.restore();
