@@ -259,7 +259,9 @@ function spawnEnemy() {
         spawnTimer = 0; let side = Math.floor(Math.random() * 4), x, y;
         if (side === 0) { x = Math.random() * canvas.width; y = -50; } else if (side === 1) { x = canvas.width + 50; y = Math.random() * canvas.height; }
         else if (side === 2) { x = Math.random() * canvas.width; y = canvas.height + 50; } else { x = -50; y = Math.random() * canvas.height; }
-        const types = player.score < 50 ? ['Swordsman', 'T-Rex'] : player.score < 150 ? ['Swordsman', 'Archer', 'T-Rex'] : ['Swordsman', 'Archer', 'Mage', 'Grenadier', 'Ghost', 'T-Rex'];
+        let types = ['Swordsman'];
+        if (player.score >= 50) types.push('T-Rex', 'Archer');
+        if (player.score >= 150) types.push('Mage', 'Grenadier', 'Ghost');
         pools.enemy.get(types[Math.floor(Math.random() * types.length)], x, y);
     }
 }

@@ -113,8 +113,9 @@ class Player {
         if (keys['w']) this.y -= currentSpeed; if (keys['s']) this.y += currentSpeed;
         if (keys['a']) this.x -= currentSpeed; if (keys['d']) this.x += currentSpeed;
 
-        this.x = Utils.clamp(this.x, this.radius, window.innerWidth - this.radius);
-        this.y = Utils.clamp(this.y, this.radius, window.innerHeight - this.radius);
+        // Movimentação livre corrigida: Clamp deve apenas limitar o valor final, não travar o input
+        this.x = Math.max(this.radius, Math.min(window.innerWidth - this.radius, this.x));
+        this.y = Math.max(this.radius, Math.min(window.innerHeight - this.radius, this.y));
         this.swordAngle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
 
         if (this.isPunching && now - this.punchStartTime > this.punchDuration) {
@@ -190,7 +191,7 @@ class Enemy {
             case 'Mage': this.speed = 3.5; this.points = 4; this.color = '#44ffff'; this.isStatic = false; break; // Pontos 3 -> 4
             case 'Grenadier': this.speed = 3.8; this.points = 3; this.color = '#ffaa44'; this.isDead = false; this.deathTime = 0; break;
             case 'Ghost': this.speed = 2.0; this.points = 4; this.color = 'rgba(255,255,255,0)'; break;
-            case 'T-Rex': this.speed = 4.5; this.points = 2; this.color = '#ff0000'; this.path = []; this.targetX = x; this.targetY = y; break;
+            case 'T-Rex': this.speed = 4.5; this.points = 3; this.color = '#ff0000'; this.path = []; this.targetX = x; this.targetY = y; break;
         }
     }
     update(player, pool) {
