@@ -8,7 +8,7 @@ const deathOverlay = document.getElementById('death-overlay');
 const startScreen = document.getElementById('start-screen');
 const customCursor = document.getElementById('custom-cursor');
 
-let gameActive = false, paused = false, mouse = { x: 0, y: 0 }, keys = {}, player = new Player();
+let gameActive = false, paused = false, mouse = { x: 0, y: 0, isDown: false }, keys = {}, player = new Player();
 let spawnTimer = 0, nextThreshold = 100;
 
 const pools = {
@@ -44,15 +44,8 @@ window.addEventListener('mousemove', (e) => {
     customCursor.style.left = mouse.x + 'px'; customCursor.style.top = mouse.y + 'px';
 });
 
-window.addEventListener('mousedown', () => {
-    if (gameActive && !paused && player.mode === 'Pistol') {
-        const now = Date.now();
-        if (now - player.lastShoot > player.pistolCooldown) {
-            pools.bullet.get(player.x, player.y, Math.atan2(mouse.y - player.y, mouse.x - player.x), true);
-            player.lastShoot = now;
-        }
-    }
-});
+window.addEventListener('mousedown', () => mouse.isDown = true);
+window.addEventListener('mouseup', () => mouse.isDown = false);
 
 function showUpgradeMenu() {
     paused = true; menuOverlay.classList.remove('hidden');
@@ -91,6 +84,15 @@ function update() {
     if (!gameActive || paused) return;
     player.update(keys, mouse);
     spawnEnemy();
+
+    // Shooting logic
+    if (gameActive && !paused && mouse.isDown && player.mode === 'Pistol') {
+        const now = Date.now();
+        if (now - player.lastShoot > player.pistolCooldown) {
+            pools.bullet.get(player.x, player.y, Math.atan2(mouse.y - player.y, mouse.x - player.x), true);
+            player.lastShoot = now;
+        }
+    }
 
     pools.enemy.getAllActive().forEach(e => {
         e.update(player, pools); let d = Utils.dist(e.x, e.y, player.x, player.y);

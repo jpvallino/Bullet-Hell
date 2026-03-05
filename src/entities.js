@@ -37,7 +37,7 @@ class Player {
         this.score = 0;
         this.speed = 6; this.swordAngle = 0;
         this.swordLength = 85; this.swordCount = 1;
-        this.pistolCooldown = 250; this.lastShoot = 0;
+        this.pistolCooldown = 150; this.lastShoot = 0;
         this.bulletSize = 6;
         this.vulnerable = false;
     }
@@ -91,7 +91,7 @@ class Enemy {
             case 'Archer':
                 if (dist > 300) { this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed; }
                 else if (dist < 250) { this.x -= (dx / dist) * this.speed; this.y -= (dy / dist) * this.speed; }
-                if (Math.round(this.timer * 60) % 180 === 0) pool.bullet.get(this.x, this.y, Math.atan2(dy, dx), false);
+                if (Math.round(this.timer * 60) % 300 === 0) pool.bullet.get(this.x, this.y, Math.atan2(dy, dx), false);
                 break;
             case 'Mage':
                 if (!this.isStatic) {
