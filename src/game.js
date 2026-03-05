@@ -255,8 +255,16 @@ function update() {
 
 function spawnEnemy() {
     spawnTimer += 0.016;
-    if (spawnTimer >= 1.2) {
-        spawnTimer = 0; let side = Math.floor(Math.random() * 4), x, y;
+    let baseInterval = 2.0;
+    let currentInterval = baseInterval;
+    if (player.score >= 200) {
+        let steps = Math.floor((player.score - 200) / 100) + 1;
+        currentInterval = Math.max(0.4, baseInterval - (steps * 0.25));
+    }
+
+    if (spawnTimer >= currentInterval) {
+        spawnTimer = 0;
+        let side = Math.floor(Math.random() * 4), x, y;
         if (side === 0) { x = Math.random() * canvas.width; y = -50; } else if (side === 1) { x = canvas.width + 50; y = Math.random() * canvas.height; }
         else if (side === 2) { x = Math.random() * canvas.width; y = canvas.height + 50; } else { x = -50; y = Math.random() * canvas.height; }
         let types = ['Swordsman'];

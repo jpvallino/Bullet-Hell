@@ -64,6 +64,41 @@ class Whip {
     }
 }
 
+class MagicCircle {
+    constructor() { this.active = false; }
+    init(x, y) {
+        this.x = x; this.y = y;
+        this.radius = 70;
+        this.duration = 2000; // 2 seconds to explode
+        this.isActivated = false;
+        this.active = true;
+        this.creationTime = Date.now();
+    }
+    update() {
+        if (!this.active) return;
+        const elapsed = Date.now() - this.creationTime;
+        if (elapsed > this.duration) {
+            this.isActivated = true;
+            if (elapsed > this.duration + 500) this.active = false;
+        }
+    }
+    draw(ctx) {
+        if (!this.active) return;
+        ctx.save();
+        const elapsed = Date.now() - this.creationTime;
+        const progress = Math.min(elapsed / this.duration, 1);
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        if (!this.isActivated) {
+            ctx.strokeStyle = `rgba(255, 100, 0, ${0.3 + progress * 0.7})`;
+            ctx.lineWidth = 3; ctx.stroke();
+            ctx.fillStyle = 'rgba(255, 100, 0, 0.15)'; ctx.fill();
+        } else {
+            ctx.fillStyle = 'rgba(255, 50, 0, 0.7)'; ctx.shadowBlur = 25; ctx.shadowColor = '#ff3200'; ctx.fill();
+        }
+        ctx.restore();
+    }
+}
+
 class Player {
     constructor() { this.reset(); }
     reset() {
@@ -221,8 +256,19 @@ class Enemy {
                 if (Math.round(this.timer * 60) % 150 === 0) pool.bullet.get(this.x, this.y, Math.atan2(dy, dx), false, 'spear');
                 break;
             case 'Grenadier':
-                this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;
-                if (dist < this.radius + player.radius) { this.isDead = true; this.deathTime = Date.now(); player.hp -= 20; updateUI(); }
+                if (!this.isStatic) {
+                    this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;
+                    if (dist < 450) this.isStatic = true;
+                }
+                // Throw bomb logic: Every 3 seconds
+                if (Math.round(this.timer * 60) % 180 === 0) {
+                    pool.magicCircle.get(player.x, player.y);
+                }
+                if (dist < this.radius + player.radius) {
+                    this.isDead = true; this.deathTime = Date.now();
+                    player.hp -= 20 * (player.damageReduc || 1);
+                    updateUI();
+                }
                 break;
             case 'Ghost':
                 this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;
