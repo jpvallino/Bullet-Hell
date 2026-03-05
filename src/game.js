@@ -185,7 +185,7 @@ function update() {
             }
         }
         pools.whip.getAllActive().forEach(w => {
-            if (Utils.dist(e.x, e.y, w.x, w.y) < e.radius + 30) {
+            if (Utils.dist(e.x, e.y, w.x, w.y) < e.radius + 45) {
                 e.active = false; player.score += e.points * (player.scoreMult || 1);
                 Utils.burst(e.x, e.y, e.color, pools.particle); updateUI();
                 if (player.lifesteal) player.hp = Math.min(player.maxHp, player.hp + player.lifesteal);

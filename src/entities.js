@@ -36,7 +36,7 @@ class Whip {
     init(x, y, angle) {
         this.x = x; this.y = y; this.angle = angle; this.active = true;
         this.startX = x; this.startY = y; this.timer = 0; this.isReturning = false;
-        this.speed = 10; this.maxDist = 500;
+        this.speed = 18; this.maxDist = 800;
     }
     update(player) {
         if (!this.active) return;
@@ -52,14 +52,14 @@ class Whip {
                 let dx = player.x - this.x, dy = player.y - this.y;
                 let d = Math.sqrt(dx * dx + dy * dy);
                 if (d < 20) { this.active = false; player.lastWhipReturn = Date.now(); }
-                else { this.x += (dx / d) * 15; this.y += (dy / d) * 15; }
+                else { this.x += (dx / d) * 25; this.y += (dy / d) * 25; }
             }
         }
     }
     draw(ctx) {
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
         ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.shadowBlur = 15; ctx.shadowColor = '#fff';
-        ctx.beginPath(); ctx.moveTo(-30, 0); ctx.bezierCurveTo(-10, 10, 10, -10, 30, 0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-50, 0); ctx.bezierCurveTo(-20, 15, 20, -15, 50, 0); ctx.stroke();
         ctx.restore();
     }
 }
