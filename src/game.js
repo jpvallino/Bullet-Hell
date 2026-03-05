@@ -37,15 +37,36 @@ function endGame() {
     document.getElementById('final-score').innerText = `Pontos: ${player.score}`;
 }
 
-window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
-window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+window.addEventListener('mousedown', () => {
+    mouse.isDown = true;
+    const now = Date.now();
+    if (gameActive && !paused) {
+        if (player.mode === 'PreUpgrade' && now - player.lastPunch > player.punchCooldown) {
+            player.isPunching = true;
+            player.punchStartTime = now;
+            player.lastPunch = now;
+        }
+    }
+});
+window.addEventListener('mouseup', () => mouse.isDown = false);
+
 window.addEventListener('mousemove', (e) => {
     mouse.x = e.clientX; mouse.y = e.clientY;
     customCursor.style.left = mouse.x + 'px'; customCursor.style.top = mouse.y + 'px';
 });
 
-window.addEventListener('mousedown', () => mouse.isDown = true);
-window.addEventListener('mouseup', () => mouse.isDown = false);
+window.addEventListener('keydown', (e) => {
+    keys[e.key.toLowerCase()] = true;
+    if (e.code === 'Space' && gameActive && !paused) {
+        const now = Date.now();
+        if (now - player.lastDash > player.dashCooldown) {
+            player.isDashing = true;
+            player.dashStartTime = now;
+            player.lastDash = now;
+        }
+    }
+});
+window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
 
 function showUpgradeMenu() {
     paused = true; menuOverlay.classList.remove('hidden');
@@ -108,9 +129,18 @@ function update() {
         }
 
         if (player.mode === 'PreUpgrade') {
+            // Only kill if punching
+            if (player.isPunching) {
+                let punchX = player.x + Math.cos(player.swordAngle) * (player.radius + 15);
+                let punchY = player.y + Math.sin(player.swordAngle) * (player.radius + 15);
+                if (Utils.dist(e.x, e.y, punchX, punchY) < e.radius + 20) {
+                    e.active = false; player.score += e.points; Utils.burst(e.x, e.y, e.color, pools.particle);
+                    updateUI(); if (player.score >= nextThreshold) showUpgradeMenu();
+                }
+            }
+            // Touching enemy now deals damage in PreUpgrade too (since we have a weapon)
             if (d < e.radius + player.radius) {
-                e.active = false; player.score += e.points; Utils.burst(e.x, e.y, e.color, pools.particle);
-                updateUI(); if (player.score >= nextThreshold) showUpgradeMenu();
+                player.hp -= 10; e.active = false; updateUI();
             }
         } else {
             if (d < e.radius + player.radius) { player.hp -= 20; e.active = false; updateUI(); }

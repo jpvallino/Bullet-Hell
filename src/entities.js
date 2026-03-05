@@ -40,16 +40,57 @@ class Player {
         this.pistolCooldown = 150; this.lastShoot = 0;
         this.bulletSize = 6;
         this.vulnerable = false;
+
+        // Dash and Punch
+        this.isDashing = false;
+        this.dashStartTime = 0;
+        this.dashDuration = 200; // ms
+        this.dashCooldown = 5000; // ms
+        this.lastDash = -5000; // Start ready
+        this.dashSpeedMult = 3.5;
+
+        this.isPunching = false;
+        this.punchStartTime = 0;
+        this.punchDuration = 150; // ms
+        this.punchRange = 45;
+        this.lastPunch = 0;
+        this.punchCooldown = 400; // ms
     }
     update(keys, mouse) {
-        if (keys['w']) this.y -= this.speed; if (keys['s']) this.y += this.speed;
-        if (keys['a']) this.x -= this.speed; if (keys['d']) this.x += this.speed;
+        let currentSpeed = this.speed;
+        const now = Date.now();
+
+        // Dash Logic
+        if (this.isDashing) {
+            if (now - this.dashStartTime > this.dashDuration) {
+                this.isDashing = false;
+            } else {
+                currentSpeed *= this.dashSpeedMult;
+            }
+        }
+
+        if (keys['w']) this.y -= currentSpeed; if (keys['s']) this.y += currentSpeed;
+        if (keys['a']) this.x -= currentSpeed; if (keys['d']) this.x += currentSpeed;
+
         this.x = Utils.clamp(this.x, this.radius, window.innerWidth - this.radius);
         this.y = Utils.clamp(this.y, this.radius, window.innerHeight - this.radius);
         this.swordAngle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
+
+        // Punch Logic
+        if (this.isPunching && now - this.punchStartTime > this.punchDuration) {
+            this.isPunching = false;
+        }
     }
     draw(ctx) {
         ctx.save(); ctx.translate(this.x, this.y);
+
+        // Visual indicator for dash ready
+        const now = Date.now();
+        if (now - this.lastDash > this.dashCooldown) {
+            ctx.beginPath(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+            ctx.arc(0, 0, this.radius + 5, 0, Math.PI * 2); ctx.stroke();
+        }
+
         if (this.mode === 'Sword') {
             ctx.shadowBlur = 15; ctx.shadowColor = '#00f2ff'; ctx.fillStyle = '#00f2ff';
             for (let i = 0; i < this.swordCount; i++) {
@@ -57,8 +98,28 @@ class Player {
                 ctx.fillRect(0, -4, this.swordLength, 8); ctx.restore();
             }
         }
+
+        // Punch Visual
+        if (this.isPunching) {
+            ctx.save(); ctx.rotate(this.swordAngle);
+            ctx.fillStyle = '#fff'; ctx.shadowBlur = 10; ctx.shadowColor = '#fff';
+            let pProgress = (now - this.punchStartTime) / this.punchDuration;
+            let pOffset = Math.sin(pProgress * Math.PI) * 20;
+            ctx.fillRect(this.radius - 5 + pOffset, -6, 15, 12);
+            ctx.restore();
+        }
+
         ctx.fillStyle = (this.mode === 'PreUpgrade') ? '#fff' : '#00f2ff';
-        ctx.shadowBlur = 15; ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = this.isDashing ? 30 : 15;
+        ctx.shadowColor = ctx.fillStyle;
+
+        // Trail effect if dashing
+        if (this.isDashing) {
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath(); ctx.arc(-10, 0, this.radius, 0, Math.PI * 2); ctx.fill();
+        }
+
+        ctx.globalAlpha = 1.0;
         ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
     }
