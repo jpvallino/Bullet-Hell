@@ -260,8 +260,9 @@ class Enemy {
                     this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;
                     if (dist < 450) this.isStatic = true;
                 }
-                // Throw bomb logic: Every 3 seconds
-                if (Math.round(this.timer * 60) % 180 === 0) {
+                // Throw bomb logic: Every 3 seconds, ONLY IF ON SCREEN
+                const onScreen = this.x > 0 && this.x < window.innerWidth && this.y > 0 && this.y < window.innerHeight;
+                if (onScreen && Math.round(this.timer * 60) % 180 === 0) {
                     pool.magicCircle.get(player.x, player.y);
                 }
                 if (dist < this.radius + player.radius) {

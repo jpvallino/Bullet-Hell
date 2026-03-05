@@ -255,7 +255,7 @@ function update() {
 
 function spawnEnemy() {
     spawnTimer += 0.016;
-    let baseInterval = 2.0;
+    let baseInterval = 1.8;
     let currentInterval = baseInterval;
     if (player.score >= 200) {
         let steps = Math.floor((player.score - 200) / 100) + 1;
