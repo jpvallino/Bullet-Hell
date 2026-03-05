@@ -76,7 +76,7 @@ function showUpgradeMenu() {
     let allOptions = [
         { id: 'pistol', icon: '🔫', title: 'PISTOLA', desc: 'Atire no mouse para destruir inimigos e balas.', cb: () => { player.mode = 'Pistol'; player.vulnerable = true; customCursor.classList.remove('hidden'); } },
         { id: 'sword', icon: '⚔️', title: 'ESPADA', desc: 'Lâmina rotativa letal. O corpo se torna vulnerável.', cb: () => { player.mode = 'Sword'; player.vulnerable = true; customCursor.classList.remove('hidden'); } },
-        { id: 'whip', icon: '➰', title: 'CHICOTE', desc: 'Lança um chicote que volta após 3s.', cb: () => { player.whipOwned = true; } },
+        { id: 'whip', icon: '➰', title: 'CHICOTE', desc: 'Lança um chicote que volta após 1s.', cb: () => { player.mode = 'Whip'; player.vulnerable = true; } },
         { id: 'hp', icon: '❤️', title: 'SAÚDE', desc: 'Aumenta HP máximo em 50 e cura.', cb: () => { player.maxHp += 50; player.hp = player.maxHp; } },
         { id: 'speed', icon: '👟', title: 'VELOCIDADE', desc: 'Aumenta velocidade de movimento.', cb: () => { player.speed += 1.5; } },
         { id: 'dash', icon: '💨', title: 'DASH+', desc: 'Reduz cooldown do dash em 1s.', cb: () => { player.dashCooldown -= 1000; } },
@@ -115,7 +115,7 @@ function update() {
             pools.bullet.get(player.x, player.y, Math.atan2(mouse.y - player.y, mouse.x - player.x), true);
             player.lastShoot = now;
         }
-        if (player.whipOwned && now - player.lastWhipShoot > player.whipCooldown && now - player.lastWhipReturn > player.whipCooldown) {
+        if (player.mode === 'Whip' && now - player.lastWhipShoot > 1000 && now - player.lastWhipReturn > 1000) {
             if (pools.whip.getAllActive().length === 0) {
                 pools.whip.get(player.x, player.y, Math.atan2(mouse.y - player.y, mouse.x - player.x));
                 player.lastWhipShoot = now;

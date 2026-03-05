@@ -48,7 +48,7 @@ class Whip {
                 this.timer = Date.now();
             }
         } else {
-            if (Date.now() - this.timer > 3000) {
+            if (Date.now() - this.timer > 1000) {
                 let dx = player.x - this.x, dy = player.y - this.y;
                 let d = Math.sqrt(dx * dx + dy * dy);
                 if (d < 20) { this.active = false; player.lastWhipReturn = Date.now(); }
@@ -92,10 +92,9 @@ class Player {
         this.lastPunch = 0;
         this.punchCooldown = 400; // ms
 
-        this.whipOwned = false;
         this.lastWhipShoot = 0;
         this.lastWhipReturn = 0;
-        this.whipCooldown = 3000;
+        this.whipCooldown = 1000;
     }
     update(keys, mouse) {
         let currentSpeed = this.speed;
