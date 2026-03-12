@@ -257,7 +257,10 @@ function spawnEnemy() {
     spawnTimer += 0.016;
     let baseInterval = 1.8;
     let currentInterval = baseInterval;
-    if (player.score >= 200) {
+
+    if (player.score < 50) {
+        currentInterval = 1.4; // Slightly faster spawnrate before 50 points
+    } else if (player.score >= 200) {
         let steps = Math.floor((player.score - 200) / 100) + 1;
         currentInterval = Math.max(0.4, baseInterval - (steps * 0.25));
     }

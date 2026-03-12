@@ -108,7 +108,7 @@ class Player {
         this.score = 0;
         this.speed = 6; this.swordAngle = 0;
         this.swordLength = 85; this.swordCount = 1;
-        this.pistolCooldown = 100; // 100ms as requested
+        this.pistolCooldown = 250; // Increased to 250ms for slower firing rate
         this.lastShoot = 0;
         this.bulletSize = 6;
         this.vulnerable = false;
