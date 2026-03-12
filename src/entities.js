@@ -4,8 +4,8 @@ class Bullet {
         this.x = x; this.y = y; this.angle = angle;
         this.isFriendly = isFriendly; this.type = type;
         this.active = true;
-        this.size = type === 'spear' ? 10 : (type === 'whip' ? 12 : 6);
-        this.speed = type === 'spear' ? 5.5 : (type === 'whip' ? 12 : 7);
+        this.size = type === 'spear' ? 10 : 6;
+        this.speed = type === 'spear' ? 5.5 : 7;
     }
     update() {
         this.x += Math.cos(this.angle) * this.speed;
@@ -20,82 +20,10 @@ class Bullet {
         if (this.type === 'spear') {
             ctx.translate(this.x, this.y); ctx.rotate(this.angle);
             ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-12, -6); ctx.lineTo(-12, 6); ctx.closePath();
-        } else if (this.type === 'whip') {
-            ctx.translate(this.x, this.y); ctx.rotate(this.angle);
-            ctx.fillStyle = '#fff'; ctx.shadowColor = '#fff';
-            ctx.fillRect(-15, -2, 30, 4);
         } else {
             ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         }
         ctx.fill(); ctx.restore();
-    }
-}
-
-class Whip {
-    constructor() { this.active = false; this.isReturning = false; }
-    init(x, y, angle) {
-        this.x = x; this.y = y; this.angle = angle; this.active = true;
-        this.startX = x; this.startY = y; this.timer = 0; this.isReturning = false;
-        this.speed = 18; this.maxDist = 800;
-    }
-    update(player) {
-        if (!this.active) return;
-        if (!this.isReturning) {
-            this.x += Math.cos(this.angle) * this.speed;
-            this.y += Math.sin(this.angle) * this.speed;
-            if (Utils.dist(this.x, this.y, this.startX, this.startY) >= this.maxDist) {
-                this.isReturning = true;
-                this.timer = Date.now();
-            }
-        } else {
-            if (Date.now() - this.timer > 1000) {
-                let dx = player.x - this.x, dy = player.y - this.y;
-                let d = Math.sqrt(dx * dx + dy * dy);
-                if (d < 20) { this.active = false; player.lastWhipReturn = Date.now(); }
-                else { this.x += (dx / d) * 25; this.y += (dy / d) * 25; }
-            }
-        }
-    }
-    draw(ctx) {
-        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.shadowBlur = 15; ctx.shadowColor = '#fff';
-        ctx.beginPath(); ctx.moveTo(-50, 0); ctx.bezierCurveTo(-20, 15, 20, -15, 50, 0); ctx.stroke();
-        ctx.restore();
-    }
-}
-
-class MagicCircle {
-    constructor() { this.active = false; }
-    init(x, y) {
-        this.x = x; this.y = y;
-        this.radius = 70;
-        this.duration = 2000; // 2 seconds to explode
-        this.isActivated = false;
-        this.active = true;
-        this.creationTime = Date.now();
-    }
-    update() {
-        if (!this.active) return;
-        const elapsed = Date.now() - this.creationTime;
-        if (elapsed > this.duration) {
-            this.isActivated = true;
-            if (elapsed > this.duration + 500) this.active = false;
-        }
-    }
-    draw(ctx) {
-        if (!this.active) return;
-        ctx.save();
-        const elapsed = Date.now() - this.creationTime;
-        const progress = Math.min(elapsed / this.duration, 1);
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        if (!this.isActivated) {
-            ctx.strokeStyle = `rgba(255, 100, 0, ${0.3 + progress * 0.7})`;
-            ctx.lineWidth = 3; ctx.stroke();
-            ctx.fillStyle = 'rgba(255, 100, 0, 0.15)'; ctx.fill();
-        } else {
-            ctx.fillStyle = 'rgba(255, 50, 0, 0.7)'; ctx.shadowBlur = 25; ctx.shadowColor = '#ff3200'; ctx.fill();
-        }
-        ctx.restore();
     }
 }
 
@@ -104,69 +32,24 @@ class Player {
     reset() {
         this.x = window.innerWidth / 2; this.y = window.innerHeight / 2;
         this.radius = 18; this.mode = 'PreUpgrade';
-        this.hp = 200; this.maxHp = 200;
+        this.hp = 200; // Vida aumentada para 200
+        this.maxHp = 200;
         this.score = 0;
         this.speed = 6; this.swordAngle = 0;
         this.swordLength = 85; this.swordCount = 1;
-        this.pistolCooldown = 100; // 100ms as requested
-        this.lastShoot = 0;
+        this.pistolCooldown = 350; this.lastShoot = 0;
         this.bulletSize = 6;
         this.vulnerable = false;
-
-        // Dash and Punch
-        this.isDashing = false;
-        this.dashStartTime = 0;
-        this.dashDuration = 200; // ms
-        this.dashCooldown = 5000; // ms
-        this.lastDash = -5000;
-        this.dashSpeedMult = 3.5;
-
-        this.isPunching = false;
-        this.punchStartTime = 0;
-        this.punchDuration = 150; // ms
-        this.punchRange = 45;
-        this.lastPunch = 0;
-        this.punchCooldown = 400; // ms
-
-        this.lastWhipShoot = 0;
-        this.lastWhipReturn = 0;
-        this.whipCooldown = 1000;
     }
     update(keys, mouse) {
-        let currentSpeed = this.speed;
-        const now = Date.now();
-
-        // Dash Logic
-        if (this.isDashing) {
-            if (now - this.dashStartTime > this.dashDuration) {
-                this.isDashing = false;
-            } else {
-                currentSpeed *= this.dashSpeedMult;
-            }
-        }
-
-        if (keys['w']) this.y -= currentSpeed; if (keys['s']) this.y += currentSpeed;
-        if (keys['a']) this.x -= currentSpeed; if (keys['d']) this.x += currentSpeed;
-
-        // Movimentação livre corrigida: Clamp deve apenas limitar o valor final, não travar o input
-        this.x = Math.max(this.radius, Math.min(window.innerWidth - this.radius, this.x));
-        this.y = Math.max(this.radius, Math.min(window.innerHeight - this.radius, this.y));
+        if (keys['w']) this.y -= this.speed; if (keys['s']) this.y += this.speed;
+        if (keys['a']) this.x -= this.speed; if (keys['d']) this.x += this.speed;
+        this.x = Utils.clamp(this.x, this.radius, window.innerWidth - this.radius);
+        this.y = Utils.clamp(this.y, this.radius, window.innerHeight - this.radius);
         this.swordAngle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
-
-        if (this.isPunching && now - this.punchStartTime > this.punchDuration) {
-            this.isPunching = false;
-        }
     }
     draw(ctx) {
         ctx.save(); ctx.translate(this.x, this.y);
-        const now = Date.now();
-
-        // Dash Ready Visual
-        if (now - this.lastDash > this.dashCooldown) {
-            ctx.beginPath(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.lineWidth = 2;
-            ctx.arc(0, 0, this.radius + 8, 0, Math.PI * 2); ctx.stroke();
-        }
-
         if (this.mode === 'Sword') {
             ctx.shadowBlur = 15; ctx.shadowColor = '#00f2ff'; ctx.fillStyle = '#00f2ff';
             for (let i = 0; i < this.swordCount; i++) {
@@ -174,36 +57,8 @@ class Player {
                 ctx.fillRect(0, -4, this.swordLength, 8); ctx.restore();
             }
         }
-
-        // Punch Aim Indicator (Pre-Upgrade)
-        if (this.mode === 'PreUpgrade' && !this.isPunching) {
-            ctx.save(); ctx.rotate(this.swordAngle);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
-            ctx.strokeRect(this.radius + 5, -8, 20, 16);
-            ctx.restore();
-        }
-
-        // Punch Visual
-        if (this.isPunching) {
-            ctx.save(); ctx.rotate(this.swordAngle);
-            ctx.fillStyle = '#fff'; ctx.shadowBlur = 10; ctx.shadowColor = '#fff';
-            let pProgress = (now - this.punchStartTime) / this.punchDuration;
-            let pOffset = Math.sin(pProgress * Math.PI) * 20;
-            ctx.fillRect(this.radius - 5 + pOffset, -6, 15, 12);
-            ctx.restore();
-        }
-
         ctx.fillStyle = (this.mode === 'PreUpgrade') ? '#fff' : '#00f2ff';
-        ctx.shadowBlur = this.isDashing ? 30 : 15;
-        ctx.shadowColor = ctx.fillStyle;
-
-        if (this.isDashing) {
-            ctx.globalAlpha = 0.5;
-            ctx.beginPath(); ctx.arc(-10, 0, this.radius, 0, Math.PI * 2); ctx.fill();
-        }
-
-        ctx.globalAlpha = 1.0;
+        ctx.shadowBlur = 15; ctx.shadowColor = ctx.fillStyle;
         ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
     }
@@ -215,38 +70,28 @@ class Enemy {
         this.type = type; this.x = x; this.y = y;
         this.radius = 22; this.active = true; this.timer = 0; this.swordRot = 0;
         this.swordLen = 25; // Espada do inimigo maior
-        this.isDead = false; // Initialize isDead for all enemies
-        this.deathTime = 0; // Initialize deathTime for all enemies
-        this.setup(x, y); // Pass x, y to setup for T-Rex
+        this.setup();
     }
-    setup(x, y) {
+    setup() {
         switch (this.type) {
             case 'Swordsman': this.speed = 2.4; this.points = 2; this.color = '#ff4444'; break; // Pontos 1 -> 2
             case 'Archer': this.speed = 1.4; this.points = 3; this.color = '#cc44ff'; break;    // Pontos 2 -> 3
             case 'Mage': this.speed = 3.5; this.points = 4; this.color = '#44ffff'; this.isStatic = false; break; // Pontos 3 -> 4
-            case 'Grenadier': this.speed = 3.8; this.points = 3; this.color = '#ffaa44'; this.isDead = false; this.deathTime = 0; break;
-            case 'Ghost': this.speed = 2.0; this.points = 4; this.color = 'rgba(255,255,255,0)'; break;
-            case 'T-Rex': this.speed = 4.5; this.points = 3; this.color = '#ff0000'; this.path = []; this.targetX = x; this.targetY = y; break;
+            case 'Grenadier': this.speed = 3.8; this.points = 3; this.color = '#ffaa44'; break; // Pontos 2 -> 3
         }
     }
     update(player, pool) {
-        if (this.isDead) { // Check for ANY dead enemy with a timer (mainly Grenadier)
-            if (this.type === 'Grenadier' && Date.now() - this.deathTime >= 3000) {
-                this.active = false; this.explode(pool);
-            }
-            return;
-        }
         this.timer += 0.016; let dx = player.x - this.x, dy = player.y - this.y;
         let dist = Math.sqrt(dx * dx + dy * dy);
         switch (this.type) {
             case 'Swordsman':
                 this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;
-                this.swordRot += 0.04;
+                this.swordRot += 0.04; // Gira mais lento (0.08 -> 0.04)
                 break;
             case 'Archer':
                 if (dist > 300) { this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed; }
                 else if (dist < 250) { this.x -= (dx / dist) * this.speed; this.y -= (dy / dist) * this.speed; }
-                if (Math.round(this.timer * 60) % 180 === 0) pool.bullet.get(this.x, this.y, Math.atan2(dy, dx), false);
+                if (Math.round(this.timer * 60) % 300 === 0) pool.bullet.get(this.x, this.y, Math.atan2(dy, dx), false);
                 break;
             case 'Mage':
                 if (!this.isStatic) {
@@ -256,36 +101,8 @@ class Enemy {
                 if (Math.round(this.timer * 60) % 150 === 0) pool.bullet.get(this.x, this.y, Math.atan2(dy, dx), false, 'spear');
                 break;
             case 'Grenadier':
-                if (!this.isStatic) {
-                    this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;
-                    if (dist < 450) this.isStatic = true;
-                }
-                // Throw bomb logic: Every 3 seconds, ONLY IF ON SCREEN
-                const onScreen = this.x > 0 && this.x < window.innerWidth && this.y > 0 && this.y < window.innerHeight;
-                if (onScreen && Math.round(this.timer * 60) % 180 === 0) {
-                    pool.magicCircle.get(player.x, player.y);
-                }
-                if (dist < this.radius + player.radius) {
-                    this.isDead = true; this.deathTime = Date.now();
-                    player.hp -= 20 * (player.damageReduc || 1);
-                    updateUI();
-                }
-                break;
-            case 'Ghost':
                 this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;
-                let opacity = Utils.clamp(0.25 * (1 - (dist / 600)), 0, 0.25);
-                this.color = `rgba(255,255,255,${opacity})`;
-                break;
-            case 'T-Rex':
-                if (Utils.dist(this.x, this.y, this.targetX, this.targetY) < 10) {
-                    this.targetX = this.x + (Math.random() - 0.5) * 400;
-                    this.targetY = this.y + (Math.random() - 0.5) * 400;
-                    this.targetX = Utils.clamp(this.targetX, 50, window.innerWidth - 50);
-                    this.targetY = Utils.clamp(this.targetY, 50, window.innerHeight - 50);
-                }
-                let tdx = this.targetX - this.x, tdy = this.targetY - this.y;
-                let tdist = Math.sqrt(tdx * tdx + tdy * tdy);
-                this.x += (tdx / tdist) * this.speed; this.y += (tdy / tdist) * this.speed;
+                if (this.timer >= 8 || dist < this.radius + player.radius) { this.active = false; this.explode(pool); }
                 break;
         }
     }
@@ -294,22 +111,8 @@ class Enemy {
         for (let a = 0; a < Math.PI * 2; a += 0.8) pool.bullet.get(this.x, this.y, a, false);
     }
     draw(ctx) {
-        if (this.isDead && this.type === 'Grenadier') {
-            ctx.save(); ctx.fillStyle = 'rgba(255, 100, 0, 0.5)';
-            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + Math.sin(Date.now() * 0.005) * 5, 0, Math.PI * 2); ctx.fill();
-            ctx.restore();
-            return;
-        }
         ctx.save(); ctx.fillStyle = this.color; ctx.shadowBlur = 10; ctx.shadowColor = this.color;
-        if (this.type === 'T-Rex') {
-            // Draw Path
-            ctx.restore(); ctx.save();
-            ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)'; ctx.lineWidth = 2; ctx.setLineDash([10, 5]);
-            ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.targetX, this.targetY); ctx.stroke();
-            ctx.restore(); ctx.save();
-            ctx.fillStyle = this.color; ctx.shadowBlur = 15; ctx.shadowColor = this.color;
-            ctx.fillRect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
-        } else if (this.type === 'Swordsman') {
+        if (this.type === 'Swordsman') {
             ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
             ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.swordRot);
             ctx.fillStyle = '#fff'; ctx.fillRect(this.radius + 5, -3, this.swordLen, 6); ctx.restore();
