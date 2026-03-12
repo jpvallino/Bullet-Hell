@@ -175,8 +175,7 @@ class Player {
             }
         }
 
-        // Punch Aim Indicator (Pre-Upgrade)
-        if (this.mode === 'PreUpgrade' && !this.isPunching) {
+        if ((this.mode === 'PreUpgrade' || this.mode === 'Punch') && !this.isPunching) {
             ctx.save(); ctx.rotate(this.swordAngle);
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.lineWidth = 2; ctx.setLineDash([5, 5]);

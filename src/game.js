@@ -42,7 +42,7 @@ window.addEventListener('mousedown', () => {
     mouse.isDown = true;
     const now = Date.now();
     if (gameActive && !paused) {
-        if (player.mode === 'PreUpgrade' && now - player.lastPunch > player.punchCooldown) {
+        if ((player.mode === 'PreUpgrade' || player.mode === 'Punch') && now - player.lastPunch > player.punchCooldown) {
             player.isPunching = true;
             player.punchStartTime = now;
             player.lastPunch = now;
